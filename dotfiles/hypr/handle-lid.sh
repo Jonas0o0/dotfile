@@ -23,7 +23,7 @@ get_external_monitor() {
 
 if [ "$1" = "open" ]; then
     # Capot ouvert → réactiver l'écran du laptop
-    hyprctl keyword monitor "$LAPTOP_MONITOR, preferred, 0x0, 1.0"
+    hyprctl keyword monitor "$LAPTOP_MONITOR, enable"
 
 elif [ "$1" = "close" ]; then
     EXT_COUNT=$(count_external_monitors)
