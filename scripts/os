@@ -1,18 +1,31 @@
 #!/usr/bin/env bash
 
-# Script 'os' for managing NixOS packages
-# Usage: os {install|remove|upgrade} [package1 ...]
+# Script 'os' for managing NixOS packages and system
+# Usage: os {install|remove|upgrade|search|list|clean} [args...]
 
 set -e
 
 # Configuration
 CONFIG_DIR="$HOME/nixos-config"
-PACKAGES_FILE="$CONFIG_DIR/packages.nix"
+PACES_FILE="$CONFIG_DIR/packages.nix"
 FLAKE_URI="$CONFIG_DIR#bili"
+
+# Couleurs pour l'UX
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+RED='\033[0;31m'
+YELLOW='\033[0;33m'
+NC='\033[0m' # No Color
+
+# Helper pour l'affichage
+info() { echo -e "${BLUE}[*]${NC} $1"; }
+success() { echo -e "${GREEN}[+]${NC} $1"; }
+warn() { echo -e "${YELLOW}[!]${NC} $1"; }
+error() { echo -e "${RED}[x]${NC} $1"; }
 
 # Check packages.nix
 if [[ ! -f "$PACKAGES_FILE" ]]; then
-    echo "Error: packages.nix not found at $PACKAGES_FILE"
+    error "packages.nix not found at $PACKAGES_FILE"
     exit 1
 fi
 
@@ -20,92 +33,173 @@ COMMAND=$1
 shift
 PACKAGES=("$@")
 
-if [[ -z "$COMMAND" ]]; then
-    echo "Usage: os {install|remove|upgrade} [package1 ...]"
-    exit 1
+usage() {
+    echo -e "${BLUE}OS - NixOS System & Package Manager${NC}"
+    echo -e "A wrapper script to simplify NixOS daily operations.\n"
+    echo -e "${YELLOW}Usage:${NC} os <command> [args...]\n"
+    echo -e "${YELLOW}Commands:${NC}"
+    echo -e "  ${GREEN}install${NC} <pkg1> [pkg2...]  Install one or more packages from nixpkgs"
+    echo -e "                            (Checks if package exists before installing)"
+    echo -e "  ${GREEN}remove${NC} <pkg1> [pkg2...]   Remove one or more packages from configuration"
+    echo -e "  ${GREEN}upgrade${NC}                   Update flake inputs and rebuild the whole system"
+    echo -e "  ${GREEN}search${NC} <query>            Search for a package in the nixpkgs registry"
+    echo -e "  ${GREEN}list${NC}                      List all explicitly installed packages in packages.nix"
+    echo -e "  ${GREEN}clean${NC}                     Clean old generations to free up disk space"
+    echo -e "                            (Also optimizes the Nix store via hardlinks)\n"
+    echo -e "  ${GREEN}--help, -h${NC}                Show this help message\n"
+    echo -e "${YELLOW}Note:${NC} Configuration changes will prompt for an optional Git commit upon success."
+    exit 0
+}
+
+if [[ -z "$COMMAND" || "$COMMAND" == "--help" || "$COMMAND" == "-h" ]]; then
+    usage
 fi
 
-if [[ "$COMMAND" != "upgrade" && ${#PACKAGES[@]} -eq 0 ]]; then
-    echo "Usage: os $COMMAND package1 [package2 ...]"
-    exit 1
+if [[ "$COMMAND" =~ ^(install|remove)$ && ${#PACKAGES[@]} -eq 0 ]]; then
+    error "Command '$COMMAND' requires at least one package name."
+    usage
 fi
+
+ask_for_commit() {
+    local message="$1"
+    echo -e -n "${YELLOW}[?]${NC} Do you want to commit these changes to Git? [y/N]: "
+    read -r response
+    if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+        info "Committing to Git..."
+        git -C "$CONFIG_DIR" add "$CONFIG_DIR"
+        git -C "$CONFIG_DIR" commit -m "$message"
+        success "Changes committed successfully."
+    else
+        info "Skipping Git commit."
+    fi
+}
 
 check_installed() {
-    # Check if package is explicitly listed (exact match on line, ignoring whitespace)
-    # Using grep -F to avoid regex interpretation of package names (though unlikely to matter for valid pkg names)
     grep -q "^\s*$1$" "$PACKAGES_FILE"
+}
+
+check_pkg_exists() {
+    # Vérifie rapidement si l'attribut existe dans nixpkgs
+    nix eval "nixpkgs#$1" --raw &>/dev/null
 }
 
 perform_install() {
     local changed=0
+    local installed_pkgs=""
+
     for pkg in "${PACKAGES[@]}"; do
         if check_installed "$pkg"; then
-            echo "Package '$pkg' is already installed."
+            warn "Package '$pkg' is already installed."
         else
-            echo "Adding '$pkg' to packages.nix..."
-            # Use perl to insert before the last closing bracket matched by regex
-            # Regex explained:
-            # (.*) captures everything up to the last match group
-            # (\n\s*\]) matches the newline, whitespace, and closing bracket of the last list
-            # /s allows . to match newlines in (.*)
-            # $ENV{PKG} is used to safely pass the package name
+            info "Verifying if '$pkg' exists in nixpkgs..."
+            if ! check_pkg_exists "$pkg"; then
+                error "Package '$pkg' does not exist in nixpkgs. Skipping."
+                continue
+            fi
+            
+            info "Adding '$pkg' to packages.nix..."
             export PKG="$pkg"
             perl -i -0777 -pe 's/(.*)(\n\s*\])/$1\n  $ENV{PKG}$2/s' "$PACKAGES_FILE"
             changed=1
+            installed_pkgs="$installed_pkgs $pkg"
         fi
     done
     
     if [[ $changed -eq 1 ]]; then
-        echo "Rebuilding system..."
-        sudo nixos-rebuild switch --flake "$FLAKE_URI"
+        info "Rebuilding system (this may take a while)..."
+        if sudo nixos-rebuild switch --flake "$FLAKE_URI"; then
+            success "System rebuilt successfully!"
+            ask_for_commit "chore(pkg): install${installed_pkgs}"
+        else
+            error "System rebuild failed! Please check your configuration."
+            exit 1
+        fi
     else
-        echo "No changes made."
+        warn "No changes made."
     fi
 }
 
 perform_remove() {
     local changed=0
+    local removed_pkgs=""
+
     for pkg in "${PACKAGES[@]}"; do
         if ! check_installed "$pkg"; then
-            echo "Package '$pkg' is not installed."
+            warn "Package '$pkg' is not installed."
         else
-            echo "Removing '$pkg' from packages.nix..."
-            # Remove lines containing exactly the package name
+            info "Removing '$pkg' from packages.nix..."
             sed -i "/^\s*${pkg}$/d" "$PACKAGES_FILE"
             changed=1
+            removed_pkgs="$removed_pkgs $pkg"
         fi
     done
 
     if [[ $changed -eq 1 ]]; then
-        echo "Rebuilding system..."
-        sudo nixos-rebuild switch --flake "$FLAKE_URI"
+        info "Rebuilding system (this may take a while)..."
+        if sudo nixos-rebuild switch --flake "$FLAKE_URI"; then
+            success "System rebuilt successfully!"
+            ask_for_commit "chore(pkg): remove${removed_pkgs}"
+        else
+            error "System rebuild failed! Please check your configuration."
+            exit 1
+        fi
     else
-        echo "No changes made."
+        warn "No changes made."
     fi
 }
 
 perform_upgrade() {
-    echo "Updating flake inputs and rebuilding system..."
-    # Update flake inputs (which acts like apt update)
+    info "Updating flake inputs (fetching latest package versions)..."
     nix flake update --flake "$CONFIG_DIR"
-    # Rebuild the system
-    sudo nixos-rebuild switch --flake "$FLAKE_URI"
-    echo "System upgraded successfully!"
+    
+    info "Rebuilding system with new inputs..."
+    if sudo nixos-rebuild switch --flake "$FLAKE_URI"; then
+        success "System upgraded successfully!"
+        ask_for_commit "chore(sys): flake update and system upgrade"
+    else
+        error "System upgrade failed!"
+        exit 1
+    fi
+}
+
+perform_search() {
+    local query="${PACKAGES[0]}"
+    if [[ -z "$query" ]]; then
+        error "Search requires a query string."
+        exit 1
+    fi
+    info "Searching for '$query' in nixpkgs..."
+    nix search nixpkgs "$query"
+}
+
+perform_list() {
+    info "Packages explicitly installed in packages.nix:"
+    # Affiche les lignes entre '[' et ']' en ignorant les commentaires et lignes vides
+    sed -n '/\[/,/\]/p' "$PACKAGES_FILE" | grep -v '\[\|\]' | grep -v '^\s*#' | grep -v '^\s*$' | sed 's/^\s*/  - /'
+}
+
+perform_clean() {
+    info "Cleaning old system generations..."
+    sudo nix-collect-garbage -d
+    
+    info "Cleaning old user generations..."
+    nix-collect-garbage -d
+    
+    info "Optimizing Nix store (hardlinking identical files)..."
+    nix-store --optimise
+    
+    success "System cleaned and optimized!"
 }
 
 case "$COMMAND" in
-    install)
-        perform_install
-        ;;
-    remove)
-        perform_remove
-        ;;
-    upgrade)
-        perform_upgrade
-        ;;
+    install)  perform_install ;; 
+    remove)   perform_remove ;; 
+    upgrade)  perform_upgrade ;; 
+    search)   perform_search ;; 
+    list)     perform_list ;; 
+    clean)    perform_clean ;; 
     *)
-        echo "Unknown command: $COMMAND"
-        echo "Usage: os {install|remove|upgrade} [package1 ...]"
-        exit 1
-        ;;
+        error "Unknown command: $COMMAND"
+        usage
+        ;; 
 esac
