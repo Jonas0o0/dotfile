@@ -12,7 +12,10 @@
   home.file = {
     ".zshrc".source = ./dotfiles/zshrc;
     ".alias".source = ./dotfiles/alias;
-    "Images/wallpaper.jpg".source = ./themes/wallpaper.jpg;
+    "Images/wallpaper.jpg" = {
+      source = ./themes/wallpaper.jpg;
+      force = true;
+    };
   };
 
   xdg.configFile = {
