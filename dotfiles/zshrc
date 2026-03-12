@@ -1,0 +1,43 @@
+# [DEBUG] Début du profilage
+# zmodload zsh/zprof
+
+# --- CONFIGURATION DES COMPLÉTIONS (Optimisé) ---
+autoload -Uz compinit
+_comp_path="${ZDOTDIR:-$HOME}/.zcompdump"
+
+# Si le dump date de moins de 24h (86400 sec), on charge en mode rapide (-C)
+if [[ -n "$_comp_path"(#qN.m-1) ]]; then
+  compinit -C -d "$_comp_path"
+else
+  compinit -d "$_comp_path"
+fi
+
+# --- PLUGINS & TOOLS ---
+# Sheldon (Ton gestionnaire Rust)
+eval "$(sheldon source)"
+
+# Integrations (Zoxide, etc.)
+eval "$(zoxide init --cmd cd zsh)"
+
+# --- STYLE & PROMPT ---
+PROMPT='%F{red}%~%f %f%F{yellow}$ '
+
+# --- HISTORIQUE ---
+HISTSIZE=10000
+SAVEHIST=10000
+HISTFILE=~/.zsh_history
+setopt SHARE_HISTORY
+setopt HIST_IGNORE_DUPS
+setopt HIST_IGNORE_SPACE
+setopt HIST_REDUCE_BLANKS
+
+# --- ALIASES ---
+[[ -f ~/.alias ]] && source ~/.alias
+
+# NixOS Config Scripts
+export PATH="$HOME/nixos-config/scripts:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
+
+# [DEBUG] Fin du profilage
+# zprof  # À commenter une fois que tu es satisfait du speed
+command -v opam &>/dev/null && eval $(opam env 2>/dev/null)

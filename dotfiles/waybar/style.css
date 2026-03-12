@@ -1,0 +1,109 @@
+* {
+    border: none;
+    border-radius: 0;
+    font-family: "Cantarell", "Font Awesome 6 Free", monospace;
+    font-size: 13px;
+    min-height: 0;
+}
+
+window#waybar {
+    background: rgba(30, 30, 46, 0.95);
+    color: #cdd6f4;
+    border-bottom: 2px solid rgba(100, 100, 100, 0.5);
+    padding: 4px 10px;
+}
+
+#workspaces button {
+    padding: 0 10px;
+    background-color: transparent;
+    color: #cdd6f4;
+    margin: 5px 2px;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+#workspaces button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Active workspace: Different design as requested */
+#workspaces button.active {
+    background-color: #89b4fa;
+    color: #1e1e2e;
+    font-weight: bold;
+    min-width: 30px;
+}
+
+#workspaces button.urgent {
+    background-color: #eb4d4b;
+}
+
+#mode {
+    background-color: #64727D;
+    border-bottom: 3px solid #ffffff;
+}
+
+#clock,
+#battery,
+#cpu,
+#memory,
+#temperature,
+#backlight,
+#network,
+#pulseaudio,
+#language,
+#custom-weather,
+#window {
+    padding: 0 10px;
+    margin: 0px 1px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+}
+
+#window {
+    background-color: transparent;
+    font-weight: bold;
+    color: #fab387; 
+}
+
+#clock {
+    background-color: transparent;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+#battery.charging, #battery.plugged {
+    color: #a6e3a1;
+}
+
+#battery.critical:not(.charging) {
+    background-color: #f38ba8;
+    color: #1e1e2e;
+    animation-name: blink;
+    animation-duration: 0.5s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+}
+
+@keyframes blink {
+    to {
+        background-color: #ffffff;
+        color: #000000;
+    }
+}
+
+#network.disconnected {
+    background-color: #f38ba8;
+    color: #1e1e2e;
+}
+
+#pulseaudio.muted {
+    background-color: #90b1b1;
+    color: #2a5c45;
+}
+
+#custom-weather {
+    background-color: transparent;
+    font-weight: bold;
+}

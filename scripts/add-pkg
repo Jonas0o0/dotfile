@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -e
+
+PACKAGE=$1
+
+# Obtenir le chemin absolu du répertoire du script
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+CONFIG_DIR=$(dirname "$SCRIPT_DIR")
+PACKAGES_FILE="$CONFIG_DIR/packages.nix"
+
+if [ -z "$PACKAGE" ]; then
+  echo "Usage: $0 <nom_du_paquet>"
+  exit 1
+fi
+
+# Vérifier si le paquet est déjà dans le fichier
+if grep -q "^\s*$PACKAGE$" "$PACKAGES_FILE"; then
+  echo "Le paquet '$PACKAGE' est déjà dans packages.nix"
+  exit 0
+fi
+
+echo "Ajout de $PACKAGE à $PACKAGES_FILE..."
+# Insérer avant le crochet fermant ']'
+sed -i "/]/i \  $PACKAGE" "$PACKAGES_FILE"
+
+echo "Reconstruction du système..."
+# On suppose que le flake est dans le dossier parent (nixos-config)
+sudo nixos-rebuild switch --flake "$CONFIG_DIR#bili"

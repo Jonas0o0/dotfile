@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+
+# Script 'os' for managing NixOS packages
+# Usage: os {install|remove} package1 [package2 ...]
+
+set -e
+
+# Configuration
+CONFIG_DIR="$HOME/nixos-config"
+PACKAGES_FILE="$CONFIG_DIR/packages.nix"
+FLAKE_URI="$CONFIG_DIR#bili"
+
+# Check packages.nix
+if [[ ! -f "$PACKAGES_FILE" ]]; then
+    echo "Error: packages.nix not found at $PACKAGES_FILE"
+    exit 1
+fi
+
+COMMAND=$1
+shift
+PACKAGES=("$@")
+
+if [[ -z "$COMMAND" ]]; then
+    echo "Usage: os {install|remove} package1 [package2 ...]"
+    exit 1
+fi
+
+if [[ ${#PACKAGES[@]} -eq 0 ]]; then
+    echo "Usage: os $COMMAND package1 [package2 ...]"
+    exit 1
+fi
+
+check_installed() {
+    # Check if package is explicitly listed (exact match on line, ignoring whitespace)
+    # Using grep -F to avoid regex interpretation of package names (though unlikely to matter for valid pkg names)
+    grep -q "^\s*$1$" "$PACKAGES_FILE"
+}
+
+perform_install() {
+    local changed=0
+    for pkg in "${PACKAGES[@]}"; do
+        if check_installed "$pkg"; then
+            echo "Package '$pkg' is already installed."
+        else
+            echo "Adding '$pkg' to packages.nix..."
+            # Use perl to insert before the last closing bracket matched by regex
+            # Regex explained:
+            # (.*) captures everything up to the last match group
+            # (\n\s*\]) matches the newline, whitespace, and closing bracket of the last list
+            # /s allows . to match newlines in (.*)
+            # $ENV{PKG} is used to safely pass the package name
+            export PKG="$pkg"
+            perl -i -0777 -pe 's/(.*)(\n\s*\])/$1\n  $ENV{PKG}$2/s' "$PACKAGES_FILE"
+            changed=1
+        fi
+    done
+    
+    if [[ $changed -eq 1 ]]; then
+        echo "Rebuilding system..."
+        sudo nixos-rebuild switch --flake "$FLAKE_URI"
+    else
+        echo "No changes made."
+    fi
+}
+
+perform_remove() {
+    local changed=0
+    for pkg in "${PACKAGES[@]}"; do
+        if ! check_installed "$pkg"; then
+            echo "Package '$pkg' is not installed."
+        else
+            echo "Removing '$pkg' from packages.nix..."
+            # Remove lines containing exactly the package name
+            sed -i "/^\s*${pkg}$/d" "$PACKAGES_FILE"
+            changed=1
+        fi
+    done
+
+    if [[ $changed -eq 1 ]]; then
+        echo "Rebuilding system..."
+        sudo nixos-rebuild switch --flake "$FLAKE_URI"
+    else
+        echo "No changes made."
+    fi
+}
+
+case "$COMMAND" in
+    install)
+        perform_install
+        ;;
+    remove)
+        perform_remove
+        ;;
+    *)
+        echo "Unknown command: $COMMAND"
+        echo "Usage: os {install|remove} package1 [package2 ...]"
+        exit 1
+        ;;
+esac

@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -e
+
+PACKAGE=$1
+
+# Obtenir le chemin absolu du répertoire du script
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+CONFIG_DIR=$(dirname "$SCRIPT_DIR")
+PACKAGES_FILE="$CONFIG_DIR/packages.nix"
+
+if [ -z "$PACKAGE" ]; then
+  echo "Usage: $0 <nom_du_paquet>"
+  exit 1
+fi
+
+if ! grep -q "^\s*$PACKAGE$" "$PACKAGES_FILE"; then
+  echo "Le paquet '$PACKAGE' n'a pas été trouvé dans packages.nix"
+  exit 1
+fi
+
+echo "Suppression de $PACKAGE de $PACKAGES_FILE..."
+# Supprimer la ligne contenant exactement le paquet (avec espaces optionnels avant)
+sed -i "/^\s*$PACKAGE$/d" "$PACKAGES_FILE"
+
+echo "Reconstruction du système..."
+sudo nixos-rebuild switch --flake "$CONFIG_DIR#bili"

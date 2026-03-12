@@ -1,0 +1,25 @@
+# Navigation & Listage coloré
+alias ls='ls --color=auto'
+alias grep='grep --color=auto'
+alias fgrep='fgrep --color=auto'
+alias egrep='egrep --color=auto'
+alias diff='diff --color=auto'
+alias ip='ip -color=auto'
+
+# Raccourcis pratiques
+alias ll='ls -alF --color=auto'
+alias la='ls -A --color=auto'
+alias l='ls -CF --color=auto'
+
+# Sécurité (confirmation avant écrasement/suppression)
+alias mv='mv -i'
+alias cp='cp -i'
+alias rm='rm -i'
+
+# Raccourcis Zsh spécifiques
+alias zconfig="nano ~/.zshrc"
+alias reload="source ~/.zshrc"
+
+# Raccourcis postgres cotainer
+alias startdb="bash ~/postgres-tp/start &"
+alias stopdb="bash ~/postgres-tp/stop"
