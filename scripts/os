@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Script 'os' for managing NixOS packages
-# Usage: os {install|remove} package1 [package2 ...]
+# Usage: os {install|remove|upgrade} [package1 ...]
 
 set -e
 
@@ -21,11 +21,11 @@ shift
 PACKAGES=("$@")
 
 if [[ -z "$COMMAND" ]]; then
-    echo "Usage: os {install|remove} package1 [package2 ...]"
+    echo "Usage: os {install|remove|upgrade} [package1 ...]"
     exit 1
 fi
 
-if [[ ${#PACKAGES[@]} -eq 0 ]]; then
+if [[ "$COMMAND" != "upgrade" && ${#PACKAGES[@]} -eq 0 ]]; then
     echo "Usage: os $COMMAND package1 [package2 ...]"
     exit 1
 fi
@@ -84,6 +84,15 @@ perform_remove() {
     fi
 }
 
+perform_upgrade() {
+    echo "Updating flake inputs and rebuilding system..."
+    # Update flake inputs (which acts like apt update)
+    nix flake update --flake "$CONFIG_DIR"
+    # Rebuild the system
+    sudo nixos-rebuild switch --flake "$FLAKE_URI"
+    echo "System upgraded successfully!"
+}
+
 case "$COMMAND" in
     install)
         perform_install
@@ -91,9 +100,12 @@ case "$COMMAND" in
     remove)
         perform_remove
         ;;
+    upgrade)
+        perform_upgrade
+        ;;
     *)
         echo "Unknown command: $COMMAND"
-        echo "Usage: os {install|remove} package1 [package2 ...]"
+        echo "Usage: os {install|remove|upgrade} [package1 ...]"
         exit 1
         ;;
 esac
