@@ -7,7 +7,7 @@ set -e
 
 # Configuration
 CONFIG_DIR="$HOME/nixos-config"
-PACES_FILE="$CONFIG_DIR/packages.nix"
+PACKAGES_FILE="$CONFIG_DIR/packages.nix"
 FLAKE_URI="$CONFIG_DIR#bili"
 
 # Couleurs pour l'UX
