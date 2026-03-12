@@ -92,3 +92,9 @@ La configuration Hyprland est conçue pour gérer le branchement d'écrans exter
 * Cette disposition garantit l'absence de chevauchement, indépendamment de la résolution de l'écran externe (1080p, 4K, etc.).
 
 Comportement lié au capot : La fermeture du capot alors qu'un écran externe est connecté entraîne la bascule des espaces de travail vers l'écran externe et la désactivation de l'écran interne pour préserver l'énergie (logique prise en charge par `dotfiles/hypr/handle-lid.sh`).
+
+---
+
+## Interaction avec l'IA (Gemini CLI)
+
+Pour toute assistance sur cette configuration, l'IA doit **impérativement et exclusivement répondre en français**.
