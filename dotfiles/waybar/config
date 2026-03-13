@@ -1,26 +1,45 @@
 {
     "layer": "top",
     "position": "top",
-    "spacing": 4,
-    "modules-left": ["custom/weather", "hyprland/workspaces", "hyprland/window"],
+    "height": 30,
+    "margin-top": 0,
+    "margin-left": 0,
+    "margin-right": 0,
+    "spacing": 0,
+    "modules-left": ["custom/apple", "custom/weather", "hyprland/workspaces"],
     "modules-center": ["clock"],
-    "modules-right": ["temperature", "cpu", "memory", "pulseaudio", "hyprland/language", "backlight", "network", "battery"],
-    "hyprland/workspaces": {
-        "disable-scroll": true,
-        "all-outputs": true,
-        "format": "{name}"
-    },
-    "hyprland/window": {
-        "max-length": 50
+    "modules-right": ["network", "pulseaudio", "backlight", "battery", "tray"],
+    
+    "custom/apple": {
+        "format": "",
+        "on-click": "fuzzel",
+        "tooltip": false
     },
     "custom/weather": {
         "format": "{}",
         "interval": 3600,
-        "exec": "curl -s 'https://wttr.in/?format=%C+%t+%w&lang=fr'"
+        "exec": "curl -s 'https://wttr.in/?format=%C+%t&lang=fr'"
+    },
+    "hyprland/workspaces": {
+        "disable-scroll": true,
+        "all-outputs": true,
+        "format": "{name}",
+        "on-click": "activate"
+    },
+    "tray": {
+        "icon-size": 16,
+        "spacing": 10
     },
     "clock": {
-        "format": "{:%A %d %B %Y %H:%M}",
+        "format": "{:%A %d %b %H:%M}",
         "tooltip-format": "<big>{:%Y %B}</big>\n<tt>{calendar}</tt>"
+    },
+    "backlight": {
+        "format": "{icon}",
+        "format-icons": [""],
+        "on-scroll-up": "brightnessctl set 5%+",
+        "on-scroll-down": "brightnessctl set 5%-",
+        "tooltip-format": "Luminosité: {percent}%"
     },
     "battery": {
         "states": {
@@ -30,23 +49,20 @@
         "format": "{icon} {capacity}%",
         "format-charging": " {capacity}%",
         "format-plugged": " {capacity}%",
-        "format-alt": "{time} {icon}",
-        "format-icons": ["", "", "", "", ""]
+        "format-icons": ["", "", "", "", ""],
+        "on-click": "notify-send 'Batterie' \"$(acpi -b)\""
     },
     "network": {
-        "format-wifi": " {essid}",
-        "format-ethernet": " {ipaddr}",
-        "format-linked": " {ifname} (No IP)",
-        "format-disconnected": "⚠ Disconnected",
-        "format-alt": "{ifname}: {ipaddr}/{cidr}"
+        "format-wifi": "",
+        "format-ethernet": "",
+        "format-disconnected": "⚠",
+        "tooltip-format": "{essid} ({signalStrength}%)",
+        "on-click": "alacritty -e nmtui"
     },
     "pulseaudio": {
-        "format": "{icon} {volume}%",
-        "format-bluetooth": "{icon} {volume}%",
-        "format-bluetooth-muted": " {icon}",
+        "format": "{icon}",
+        "format-bluetooth": "{icon}",
         "format-muted": "",
-        "format-source": " {volume}%",
-        "format-source-muted": "",
         "format-icons": {
             "headphone": "",
             "hands-free": "",
@@ -56,27 +72,9 @@
             "car": "",
             "default": ["", "", ""]
         },
-        "on-click": "pavucontrol"
-    },
-    "hyprland/language": {
-        "format": " {}",
-        "format-en": "EN",
-        "format-fr": "FR"
-    },
-    "backlight": {
-        "format": "{icon} {percent}%",
-        "format-icons": ["", "", "", "", "", "", "", "", ""]
-    },
-    "temperature": {
-        "critical-threshold": 80,
-        "format": "{icon} {temperatureC}°C",
-        "format-icons": ["", "", ""]
-    },
-    "cpu": {
-        "format": " {usage}%",
-        "tooltip": false
-    },
-    "memory": {
-        "format": " {}%"
+        "on-click": "pavucontrol",
+        "on-scroll-up": "wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+",
+        "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-",
+        "tooltip-format": "Volume: {volume}%"
     }
 }

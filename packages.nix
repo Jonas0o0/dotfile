@@ -36,4 +36,6 @@ with pkgs; [
   grim
   slurp
   jq
+  acpi
+  libnotify
  ]

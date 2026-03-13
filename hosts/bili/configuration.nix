@@ -71,6 +71,7 @@
   xdg.portal.config.common.default = [ "hyprland" ];
   fonts.packages = with pkgs; [
     nerd-fonts.jetbrains-mono
+    font-awesome
   ];
 
   hardware.graphics.enable = true;
