@@ -84,7 +84,16 @@
   security.pam.services = {
     login.fprintAuth = lib.mkForce true;
     sudo.fprintAuth = true;
-    hyprlock.fprintAuth = true;
+    # On autorise spécifiquement fprintAuth pour hyprlock et on le met en priorité
+    hyprlock = {
+      fprintAuth = true;
+      text = ''
+        auth required pam_shells.so
+        auth requisite pam_nologin.so
+        auth sufficient pam_fprintd.so
+        auth include common-auth
+      '';
+    };
   };
 
   # Define a user account.
