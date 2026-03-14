@@ -24,7 +24,4 @@ alias reload="source ~/.zshrc"
 alias startdb="bash ~/postgres-tp/start &"
 alias stopdb="bash ~/postgres-tp/stop"
 
-# AirDrop (OpenDrop)
-alias airdrop-find="opendrop -i awdl0 find"
-alias airdrop-receive="opendrop -i awdl0 receive"
-alias airdrop-send="opendrop -i awdl0 send"
+

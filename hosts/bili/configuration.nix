@@ -87,12 +87,6 @@
     # On autorise spécifiquement fprintAuth pour hyprlock et on le met en priorité
     hyprlock = {
       fprintAuth = true;
-      text = ''
-        auth required pam_shells.so
-        auth requisite pam_nologin.so
-        auth sufficient pam_fprintd.so
-        auth include common-auth
-      '';
     };
   };
 
