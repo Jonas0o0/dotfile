@@ -38,6 +38,7 @@
   services.blueman.enable = true;
 
   nixpkgs.config.allowUnfree = true;
+  hardware.enableRedistributableFirmware = true;
   services.xserver.enable = true;
   services.xserver.xkb.layout = "fr";
   services.xserver.desktopManager.xterm.enable = false;
@@ -112,7 +113,10 @@
   programs.nix-ld.enable = true;
 
   environment.sessionVariables = {
-    NIXOS_OZONE_WL = "1";
+    _JAVA_AWT_WM_NONREPARENTING = "1";
+    # Activer le support Wayland natif pour les IDE JetBrains récents
+    # Note: Peut nécessiter de configurer "VM Options" dans l'IDE si la variable ne suffit pas
+    # -Dawt.toolkit.name=WLToolkit
   };
 
   # --- OPTIMISATION AMD & BATTERIE ---
@@ -124,12 +128,11 @@
       # Driver AMD
       AMD_PSTATE_STATUS = "active";
     
-      # Sur Batterie : On privilégie l'autonomie maximale
+      # Sur Batterie
       CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
-      CPU_ENERGY_PERF_POLICY_ON_BAT = "power"; # C'est ici que le gain est énorme
-      CPU_MAX_PERF_ON_BAT = 60; # Limiter à 60% de la puissance évite la chauffe
+      CPU_ENERGY_PERF_POLICY_ON_BAT = "balance_power"; 
     
-      # Sur Secteur : On libère la puissance du R7
+      # Sur Secteur
       CPU_SCALING_GOVERNOR_ON_AC = "performance";
       CPU_ENERGY_PERF_POLICY_ON_AC = "performance";
     
@@ -138,11 +141,9 @@
       SOUND_POWER_SAVE_ON_BAT = 1;
     };
   };
-  services.power-profiles-daemon.enable = false; # Toujours désactivé si TLP est là
-  # services.thermald.enable = false; # Supprimé car inutile sur AMD
+  services.power-profiles-daemon.enable = false;
 
   # --- KERNEL TWEAKS & ZRAM ---
-  # ZRAM
   zramSwap = {
     enable = true;
     memoryPercent = 50;
@@ -150,17 +151,9 @@
   };
 
   boot.kernel.sysctl = {
-    # On réduit légèrement le swappiness (60 au lieu de 100) pour éviter la surcharge CPU au boot
-    "vm.swappiness" = 60; 
-    # Optimisation spécifique à la ZRAM
+    "vm.swappiness" = 100; # Valeur recommandée pour ZRAM
     "vm.page-cluster" = 0; 
-    "vm.vfs_cache_pressure" = 50;
-    "vm.dirty_writeback_centisecs" = 1500;
   };
-
-  # --- AJOUTS SYSTÈME CONSEILLÉS ---
-  # Utiliser le kernel le plus récent pour un meilleur support AMD P-State
-  boot.kernelPackages = pkgs.linuxPackages_latest;
 
   # Maintenir les performances et la santé du SSD
   services.fstrim.enable = true;
