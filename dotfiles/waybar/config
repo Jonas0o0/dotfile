@@ -18,7 +18,7 @@
     "custom/weather": {
         "format": "{}",
         "interval": 3600,
-        "exec": "curl -s 'https://wttr.in/?format=%C+%t&lang=fr'"
+        "exec": "ping -c 1 8.8.8.8 > /dev/null && curl -s 'https://wttr.in/?format=%C+%t&lang=fr' || echo 'Hors ligne'"
     },
     "hyprland/workspaces": {
         "disable-scroll": true,

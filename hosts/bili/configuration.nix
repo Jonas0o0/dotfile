@@ -150,9 +150,9 @@
   };
 
   boot.kernel.sysctl = {
-    # On monte le swappiness car la ZRAM est ultra-rapide et n'use pas le disque
-    "vm.swappiness" = 100; 
-    # Optimisation spécifique à la ZRAM (évite la lecture anticipée de pages inutiles)
+    # On réduit légèrement le swappiness (60 au lieu de 100) pour éviter la surcharge CPU au boot
+    "vm.swappiness" = 60; 
+    # Optimisation spécifique à la ZRAM
     "vm.page-cluster" = 0; 
     "vm.vfs_cache_pressure" = 50;
     "vm.dirty_writeback_centisecs" = 1500;
@@ -168,12 +168,14 @@
   # Mettre à jour le microcode du CPU AMD
   hardware.cpu.amd.updateMicrocode = true;
 
-  # Set GDM profile picture
+  # Set GDM profile picture (Sécurisé)
   system.activationScripts.gdmProfilePicture.text = ''
-    mkdir -p /var/lib/AccountsService/icons
-    cp -f /home/jonas/Images/portrait.jpg /var/lib/AccountsService/icons/jonas
-    mkdir -p /var/lib/AccountsService/users
-    echo -e "[User]\nIcon=/var/lib/AccountsService/icons/jonas\n" > /var/lib/AccountsService/users/jonas
+    if [ -f /home/jonas/Images/portrait.jpg ]; then
+      mkdir -p /var/lib/AccountsService/icons
+      cp -f /home/jonas/Images/portrait.jpg /var/lib/AccountsService/icons/jonas
+      mkdir -p /var/lib/AccountsService/users
+      echo -e "[User]\nIcon=/var/lib/AccountsService/icons/jonas\n" > /var/lib/AccountsService/users/jonas
+    fi
   '';
 
   system.stateVersion = "25.11";
