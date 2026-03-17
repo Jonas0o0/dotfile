@@ -1,100 +1,87 @@
-# Configuration NixOS (Flakes + Home Manager)
+# Configuration NixOS (Flakes + Home Manager) - Hôte : "bili"
 
-Bienvenue dans mon dépôt de configuration système NixOS. Cette configuration utilise **Flakes** et **Home Manager** pour gérer de manière déclarative le système d'exploitation, les paquets, et les fichiers de configuration de l'utilisateur (dotfiles).
+Ce dépôt contient la configuration système complète, déclarative et reproductible de la machine "bili". L'architecture repose sur l'utilisation de Nix Flakes pour la gestion des sources et de Home Manager pour l'environnement utilisateur.
 
-L'environnement de bureau principal est **Hyprland** (Wayland).
-
----
-
-## Architecture du dépôt
-
-Le dépôt est organisé de manière modulaire :
-
-- `flake.nix` & `flake.lock` : Les points d'entrée du système. Ils définissent les dépendances et la configuration de la machine.
-- `hosts/bili/` : Les configurations spécifiques à la machine (matériel, bootloader, services).
-  - `configuration.nix` : Configuration globale du système.
-  - `hardware-configuration.nix` : Configuration matérielle générée automatiquement.
-- `home.nix` : Configuration de Home Manager (liens symboliques pour les dotfiles, dossiers utilisateur).
-- `packages.nix` : La liste complète et déclarative de tous les paquets installés sur le système par l'utilisateur.
-- `dotfiles/` : Les fichiers de configuration des applications (Hyprland, Waybar, Alacritty, Zsh, etc.).
-- `themes/` : Les ressources visuelles (fonds d'écran, thèmes GRUB).
-- `scripts/` : Les scripts utilitaires, notamment le gestionnaire de paquets maison `os`.
+L'interface utilisateur s'appuie sur le gestionnaire de fenêtres composite Wayland Hyprland.
 
 ---
 
-## Gestion des paquets (Le script `os`)
+## Spécifications Techniques
 
-Pour simplifier la gestion quotidienne, un script système interactif appelé `os` est disponible. Il permet d'installer, de supprimer et de mettre à jour le système sans avoir à éditer manuellement le fichier `packages.nix` (bien que ce soit toujours possible).
+### Optimisation Matérielle (AMD)
+La configuration est optimisée pour les processeurs AMD récents :
+- Gestion active des états de performance via le pilote `amd_pstate=active`.
+- Régulation énergétique via TLP avec profils distincts pour l'alimentation sur secteur et sur batterie.
+- Mise à jour automatique du microcode CPU.
 
-Vous pouvez exécuter `os --help` dans le terminal pour consulter la documentation intégrée.
+### Interface et Environnement de Bureau
+- Gestionnaire de fenêtres : Hyprland (Wayland).
+- Barre d'état : Waybar.
+- Terminal : Alacritty.
+- Lanceur d'applications : Fuzzel.
+- Shell : Zsh géré par Sheldon, intégrant fzf et zoxide pour la navigation.
 
-### Commandes principales :
-
-* **Rechercher un paquet** :
-  ```bash
-  os search <nom_du_paquet>
-  ```
-* **Installer des paquets** :
-  ```bash
-  os install discord spotify
-  ```
-  *Cette commande vérifie l'existence du paquet dans le registre, l'ajoute à `packages.nix`, recompile le système et propose la création d'un commit Git.*
-
-* **Supprimer des paquets** :
-  ```bash
-  os remove discord
-  ```
-
-* **Mettre à jour le système** :
-  ```bash
-  os upgrade
-  ```
-  *Met à jour les dépendances Flake et lance une recompilation complète.*
-
-* **Lister les paquets installés** :
-  ```bash
-  os list
-  ```
-
-* **Nettoyer le système** :
-  ```bash
-  os clean
-  ```
-  *Supprime les anciennes générations NixOS et optimise le stockage (utilisation de hardlinks pour libérer de l'espace disque).*
+### Sécurité et Authentification
+L'authentification système utilise le sous-système PAM (Pluggable Authentication Modules) avec les composants suivants :
+- fprintd : Gestion du lecteur d'empreintes digitales.
+- Hyprlock : Écran de verrouillage supportant l'authentification par empreinte et mot de passe en parallèle.
+- Sudo : Validation des privilèges administratifs par biométrie.
 
 ---
 
-## Personnalisation et Thèmes
+## Architecture du Dépôt
 
-### Changer le fond d'écran
-Le fond d'écran est centralisé afin de s'appliquer automatiquement à **Hyprland** (bureau) et **Hyprlock** (écran de verrouillage).
+L'arborescence est organisée de manière modulaire pour faciliter la maintenance :
 
-1. Remplacez l'image située dans `themes/wallpaper.jpg` par la nouvelle image (en conservant impérativement la nomenclature `wallpaper.jpg`).
-2. Appliquez les modifications en reconstruisant le système :
-   ```bash
-   sudo nixos-rebuild switch --flake .#bili
-   ```
-   *(Cette opération mettra à jour le lien symbolique dans `~/Images/wallpaper.jpg` vers le nouveau fichier).*
-
-### Changer l'image de profil (GDM / Écran de connexion)
-L'image de l'écran de connexion est gérée automatiquement par la configuration système.
-1. Placez la photo de profil sous le nom `portrait.jpg` dans le répertoire personnel `~/Images/`.
-2. Lors du prochain redémarrage (ou `rebuild`), le système la détectera et l'appliquera à l'écran de connexion GDM.
+- flake.nix : Point d'entrée définissant les entrées nixpkgs et les configurations système.
+- flake.lock : Verrouillage des révisions exactes des dépendances.
+- configuration.nix : Paramètres globaux du système d'exploitation.
+- home.nix : Configuration de l'environnement utilisateur et des liens symboliques.
+- packages.nix : Définition de la liste des paquets installés.
+- dotfiles/ : Répertoire des fichiers de configuration spécifiques aux applications.
+- hosts/bili/ : Paramètres spécifiques au matériel (firmwares, bootloader).
+- themes/ : Ressources graphiques (fonds d'écran, thèmes système).
+- scripts/ : Utilitaires système internes.
 
 ---
 
-## Gestion des Écrans (Hyprland)
+## Déploiement et Maintenance
 
-La configuration Hyprland est conçue pour gérer le branchement d'écrans externes (hotplug) **nativement**, sans recours à des scripts de positionnement.
+### Application de la configuration
+Pour déployer les modifications ou reconstruire le système :
+```bash
+sudo nixos-rebuild switch --flake .#bili
+```
 
-* **L'écran principal (`eDP-1`)** est défini comme le point de référence central (coordonnées `0x0`).
-* **Les écrans externes** sont automatiquement positionnés **au-dessus** et **centrés horizontalement** par rapport à l'écran principal via la règle `auto-center-up` dans `hyprland.conf`.
-* Cette disposition garantit l'absence de chevauchement, indépendamment de la résolution de l'écran externe (1080p, 4K, etc.).
+### Gestion des Paquets (Utilitaire 'os')
+Un script d'interface ('os') permet d'interagir avec la configuration de manière sécurisée.
 
-Comportement lié au capot : La fermeture du capot alors qu'un écran externe est connecté entraîne la bascule des espaces de travail vers l'écran externe et la désactivation de l'écran interne pour préserver l'énergie (logique prise en charge par `dotfiles/hypr/handle-lid.sh`).
+| Commande | Action |
+| :--- | :--- |
+| os search [query] | Recherche un paquet dans le registre nixpkgs. |
+| os install [pkg] | Ajoute le paquet à packages.nix et reconstruit le système. |
+| os remove [pkg] | Retire le paquet de la configuration et reconstruit le système. |
+| os upgrade | Met à jour les entrées du flake et effectue une montée de version système. |
+| os list | Affiche la liste des paquets explicitement installés. |
+| os clean | Collecte les déchets (garbage collection) et optimise le stockage Nix. |
 
 ---
 
-## Interaction avec l'IA (Gemini CLI)
+## Configuration de l'Affichage et des Périphériques
 
-Pour toute assistance sur cette configuration, l'IA doit **impérativement et exclusivement répondre en français**.
+### Gestion Multi-écran
+La configuration Hyprland gère dynamiquement les écrans externes (hotplug) :
+- L'écran interne (eDP-1) sert de référence.
+- Les écrans externes sont automatiquement centrés au-dessus de l'écran principal.
+- Le script 'handle-lid.sh' gère le comportement lors de la fermeture du capot pour assurer la continuité des espaces de travail.
+
+### Personnalisation Graphique
+Le fond d'écran système est centralisé via le fichier `themes/wallpaper.jpg`. Sa modification nécessite une reconstruction du système pour mettre à jour les liens symboliques vers `~/Images/wallpaper.jpg`.
+
+Le chargeur de démarrage GRUB utilise le thème CrossGrub et est configuré pour ne conserver que les trois dernières générations du système afin d'optimiser le menu de démarrage.
+
+---
+
+## Conformité et Assistance
+
+Les instructions relatives à l'assistance par intelligence artificielle sont consignées dans GEMINI.md. Toute communication technique concernant ce dépôt doit être effectuée exclusivement en langue française.
