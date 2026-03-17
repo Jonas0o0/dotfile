@@ -27,6 +27,7 @@ with pkgs; [
   obsidian
   fuzzel
   postgresql
+  discord
 
   # Outils Wayland / Hyprland (utilisés dans keybinds)
   brightnessctl
