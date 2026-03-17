@@ -85,10 +85,9 @@
   security.pam.services = {
     login.fprintAuth = lib.mkForce true;
     sudo.fprintAuth = true;
-    # On autorise spécifiquement fprintAuth pour hyprlock et on le met en priorité
-    hyprlock = {
-      fprintAuth = true;
-    };
+    # On autorise hyprlock à utiliser PAM (nécessaire pour le MDP)
+    # L'empreinte sera gérée directement par hyprlock de façon asynchrone
+    hyprlock = {};
   };
 
   # Define a user account.
