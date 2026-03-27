@@ -39,4 +39,5 @@ with pkgs; [
   jq
   acpi
   libnotify
+  mako
  ]

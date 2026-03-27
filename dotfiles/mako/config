@@ -1,0 +1,23 @@
+max-history=5
+sort=-time
+anchor=top-center
+output=focused
+
+font=JetBrains Mono NF 12
+background-color=#000000aa
+text-color=#ffffff
+border-size=1
+border-color=#ffffff1a
+border-radius=8
+padding=15
+margin=10
+default-timeout=5000
+
+# Discord
+[app-name=discord]
+border-color=#5865F2
+
+# Alertes critiques (batterie, etc.)
+[urgency=critical]
+border-color=#FF5555
+default-timeout=0

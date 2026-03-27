@@ -24,10 +24,20 @@
     "alacritty".source = ./dotfiles/alacritty;
     "sheldon".source = ./dotfiles/sheldon;
     "fuzzel".source = ./dotfiles/fuzzel;
+    "mako".source = ./dotfiles/mako;
   };
 
   home.sessionVariables = {
     # EDITOR = "vim";
+  };
+
+  services.batsignal = {
+    enable = true;
+    extraArgs = [
+      "-w 20" # Warning at 20%
+      "-c 10" # Critical at 10%
+      "-d 5"  # Danger at 5% (will notify as critical)
+    ];
   };
 
   programs.home-manager.enable = true;
