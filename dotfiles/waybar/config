@@ -8,8 +8,15 @@
     "spacing": 0,
     "modules-left": ["custom/apple", "custom/weather", "hyprland/workspaces"],
     "modules-center": ["clock"],
-    "modules-right": ["network", "pulseaudio", "backlight", "battery", "tray"],
+    "modules-right": ["network", "pulseaudio", "backlight", "hyprland/language", "battery", "tray"],
     
+    "hyprland/language": {
+        "format": "{}",
+        "format-en": "US",
+        "format-fr": "FR",
+        "on-click": "hyprctl switchxkblayout all next",
+        "tooltip-format": "Layout: {layout}"
+    },
     "custom/apple": {
         "format": "",
         "on-click": "fuzzel",
